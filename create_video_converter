@@ -1,0 +1,291 @@
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+# This script must be run with root privileges
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root or with sudo"
+  exit 1
+fi
+
+echo "--- Video Converter Setup Script ---"
+
+# --- Variables ---
+SERVICE_NAME="video-converter"
+APP_DIR="/opt/$SERVICE_NAME"
+PYTHON_SCRIPT_PATH="$APP_DIR/converter.py"
+CONFIG_FILE="$APP_DIR/config.json"
+LOG_FILE="/var/log/$SERVICE_NAME.log"
+SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME.service"
+
+# --- Step 1: Install Dependencies ---
+echo "--> Step 1: Checking and installing dependencies..."
+
+# Added vainfo to check for Intel Quick Sync Video (QSV) support
+REQUIRED_PACKAGES=("ffmpeg" "python3" "python3-pip" "python3-watchdog" "vainfo")
+MISSING_PACKAGES=()
+
+# Check for missing packages
+for pkg in "${REQUIRED_PACKAGES[@]}"; do
+    if ! dpkg -s "$pkg" &> /dev/null; then
+        echo "Dependency '$pkg' is missing."
+        MISSING_PACKAGES+=("$pkg")
+    else
+        echo "Dependency '$pkg' is already installed."
+    fi
+done
+
+# Install missing packages if any
+if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
+    echo "Updating package list and installing missing dependencies..."
+    apt-get update
+    apt-get install -y "${MISSING_PACKAGES[@]}"
+else
+    echo "All dependencies are already satisfied."
+fi
+
+
+# --- Step 2: Create Directory Structure and Script ---
+echo "--> Step 2: Creating directories and copying script..."
+mkdir -p "$APP_DIR"
+# The Python script content is embedded here using a HEREDOC.
+cat > "$PYTHON_SCRIPT_PATH" << 'EOF'
+#!/usr/bin/env python3
+import os
+import json
+import subprocess
+import logging
+import time
+import sys
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+# --- Configuration ---
+CONFIG_FILE = "/opt/video-converter/config.json"
+LOG_FILE = "/var/log/video-converter.log"
+VIDEO_EXTENSIONS = ('.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mpg', '.mpeg', '.m4v')
+
+# --- Logging Setup ---
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+def select_encoder():
+    """
+    Detects available hardware and selects the best H.265 encoder.
+    Returns a list of ffmpeg arguments for the chosen encoder.
+    Presets are chosen to prioritize compression efficiency (medium).
+    """
+    # 1. Check for NVIDIA NVENC
+    try:
+        result = subprocess.run(['nvidia-smi'], capture_output=True, text=True)
+        if result.returncode == 0:
+            ffmpeg_encoders = subprocess.run(['ffmpeg', '-encoders'], capture_output=True, text=True).stdout
+            if 'h265_nvenc' in ffmpeg_encoders:
+                logging.info("NVIDIA GPU detected. Using NVENC with 'medium' preset (p4).")
+                # p4 is the 'medium' equivalent for NVENC, balancing quality and speed.
+                return ['-c:v', 'h265_nvenc', '-preset', 'p4', '-cq', '24']
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass # nvidia-smi not found or failed, continue to next check
+
+    # 2. Check for Intel Quick Sync Video (QSV)
+    try:
+        result = subprocess.run(['vainfo'], capture_output=True, text=True)
+        if result.returncode == 0 and 'VAEntrypointEncSlice' in result.stdout:
+             ffmpeg_encoders = subprocess.run(['ffmpeg', '-encoders'], capture_output=True, text=True).stdout
+             if 'hevc_qsv' in ffmpeg_encoders:
+                logging.info("Intel QSV detected. Using QSV with 'medium' preset.")
+                return ['-c:v', 'hevc_qsv', '-preset', 'medium', '-global_quality', '24']
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass # vainfo not found or failed, continue to next check
+
+    # 3. Fallback to CPU encoding
+    logging.info("No compatible GPU detected. Falling back to CPU encoding with 'medium' preset.")
+    return ['-c:v', 'libx265', '-crf', '22', '-preset', 'medium']
+
+
+def convert_to_mp4(source_file_path):
+    """
+    Converts any supported video file to a 1080p H.265 .mp4 file using the best available encoder.
+    """
+    if not os.path.exists(source_file_path):
+        logging.warning(f"File no longer exists, skipping: {source_file_path}")
+        return
+
+    try:
+        logging.info(f"Processing '{os.path.basename(source_file_path)}'.")
+        mp4_file_path = os.path.splitext(source_file_path)[0] + ".mp4"
+
+        # Get the best encoder settings for this system
+        encoder_settings = select_encoder()
+
+        command = [
+            "ffmpeg",
+            "-i", source_file_path,
+            "-map", "0:v",
+            "-map", "0:a",
+        ]
+        
+        command.extend(encoder_settings) # Add the dynamically selected encoder settings
+        
+        command.extend([
+            "-vf", "scale=w=1920:h=1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2",
+            "-c:a", "eac3",
+            "-b:a", "1536k",
+            "-y",
+            mp4_file_path
+        ])
+
+        logging.info(f"Executing ffmpeg command: {' '.join(command)}")
+        process = subprocess.run(command, capture_output=True, text=True)
+
+        if process.returncode == 0:
+            logging.info(f"Successfully converted and scaled to {mp4_file_path}")
+            if os.path.exists(mp4_file_path):
+                os.remove(source_file_path)
+                logging.info(f"Removed original file: {source_file_path}")
+        else:
+            logging.error(f"Failed to convert {source_file_path}. FFmpeg errors:\n{process.stderr}")
+
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during conversion of {source_file_path}: {e}")
+
+class VideoHandler(FileSystemEventHandler):
+    """Handles file system events for any non-MP4 video file."""
+    def on_created(self, event):
+        if not event.is_directory and event.src_path.lower().endswith(VIDEO_EXTENSIONS):
+            logging.info(f"New video file detected: {event.src_path}")
+            time.sleep(10)
+            convert_to_mp4(event.src_path)
+
+    def on_moved(self, event):
+        if not event.is_directory and event.dest_path.lower().endswith(VIDEO_EXTENSIONS):
+            logging.info(f"Video file moved into directory: {event.dest_path}")
+            time.sleep(10)
+            convert_to_mp4(event.dest_path)
+
+def initial_scan(directories):
+    logging.info("Performing initial scan of directories...")
+    for directory in directories:
+        if not os.path.isdir(directory):
+            logging.warning(f"Directory not found, skipping: {directory}")
+            continue
+        logging.info(f"Scanning {directory}...")
+        for root, _, files in os.walk(directory):
+            for filename in files:
+                if filename.lower().endswith(VIDEO_EXTENSIONS):
+                    file_path = os.path.join(root, filename)
+                    convert_to_mp4(file_path)
+    logging.info("Initial scan complete.")
+
+def main():
+    logging.info("Starting Video Converter Service.")
+    try:
+        with open(CONFIG_FILE, 'r') as f:
+            config = json.load(f)
+            directories_to_scan = config.get("directories", [])
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logging.error(f"Error reading config file {CONFIG_FILE}. Please ensure it exists and is valid JSON. Error: {e}")
+        sys.exit(1)
+
+    if not directories_to_scan:
+        logging.warning("No directories specified in the config file.")
+        while True:
+            time.sleep(3600)
+
+    initial_scan(directories_to_scan)
+
+    observer = Observer()
+    event_handler = VideoHandler()
+    for path in directories_to_scan:
+        if os.path.isdir(path):
+            observer.schedule(event_handler, path, recursive=True)
+            logging.info(f"Monitoring directory: {path}")
+        else:
+            logging.warning(f"Configured directory does not exist: {path}")
+
+    observer.start()
+    logging.info("File system monitoring started.")
+    try:
+        while True:
+            time.sleep(60)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+    logging.info("Video Converter Service stopped.")
+
+if __name__ == "__main__":
+    main()
+EOF
+chmod +x "$PYTHON_SCRIPT_PATH"
+
+# --- Step 3: Create Configuration File ---
+echo "--> Step 3: Creating configuration file in $APP_DIR..."
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "Creating default configuration at $CONFIG_FILE"
+  cat > "$CONFIG_FILE" << EOF
+{
+  "directories": [
+    "/path/to/your/movies",
+    "/path/to/your/tv-shows"
+  ]
+}
+EOF
+else
+  echo "Configuration file already exists at $CONFIG_FILE, skipping creation."
+fi
+
+# --- Step 4: Create Log File and Set Permissions ---
+echo "--> Step 4: Creating log file and setting permissions..."
+touch "$LOG_FILE"
+chmod 666 "$LOG_FILE"
+
+# --- Step 5: Create systemd Service File ---
+echo "--> Step 5: Creating systemd service file..."
+cat > "$SERVICE_FILE" << EOF
+[Unit]
+Description=Video Converter Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 $PYTHON_SCRIPT_PATH
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+echo "Service file created at $SERVICE_FILE"
+
+# --- Step 6: Enable and Start the Service ---
+echo "--> Step 6: Reloading systemd, enabling and starting the service..."
+systemctl daemon-reload
+echo "systemd daemon reloaded."
+systemctl enable $SERVICE_NAME
+echo "Service '$SERVICE_NAME' enabled."
+systemctl start $SERVICE_NAME
+echo "Service '$SERVICE_NAME' started."
+
+# --- Final Instructions ---
+echo ""
+echo "--- Setup Complete! ---"
+echo "The $SERVICE_NAME service is now running with presets optimized for compression efficiency."
+echo ""
+echo "IMPORTANT: You MUST edit the configuration file to add your actual media directories."
+echo "Edit this file: $CONFIG_FILE"
+echo ""
+echo "After editing the config, restart the service with:"
+echo "sudo systemctl restart $SERVICE_NAME"
+echo ""
+echo "To check the status and logs of the service, use:"
+echo "sudo systemctl status $SERVICE_NAME"
+echo "journalctl -u $SERVICE_NAME -f"
+echo ""
