@@ -1160,9 +1160,66 @@ class VideoConverterService:
             
             # Start observer
             self.observer.start()
+            
+            # Perform initial scan of existing files
+            self._scan_existing_files(event_handler, watch_paths)
         
         except Exception as e:
             raise WatchdogError(f"Failed to start monitoring: {e}")
+    
+    def _scan_existing_files(self, event_handler: VideoFileEventHandler, watch_paths: List[str]) -> None:
+        """
+        Scan watch directories for existing files and queue them for conversion.
+        
+        This ensures that files already present in the directories are processed,
+        not just newly created or modified files.
+        
+        Args:
+            event_handler: VideoFileEventHandler instance for pattern matching.
+            watch_paths: List of directories to scan.
+        """
+        self.logger.info("Performing initial scan of existing files...")
+        
+        files_queued = 0
+        
+        for watch_path in watch_paths:
+            watch_path_obj = pathlib.Path(watch_path)
+            
+            if not watch_path_obj.exists():
+                continue
+            
+            # Get recursive setting
+            recursive = self.config.config_data.get("directories", {}).get("recursive", True)
+            
+            # Determine glob pattern
+            glob_pattern = "**/*" if recursive else "*"
+            
+            try:
+                # Scan for matching files
+                for file_path in watch_path_obj.glob(glob_pattern):
+                    # Skip directories
+                    if file_path.is_dir():
+                        continue
+                    
+                    # Check if file matches configured patterns
+                    if not event_handler._matches_pattern(file_path):
+                        continue
+                    
+                    # Check if file is stable (not being written)
+                    if event_handler._is_stable(file_path):
+                        # Queue for conversion
+                        event_handler._queue_conversion(file_path)
+                        files_queued += 1
+                    else:
+                        self.logger.debug(f"File still being written, skipping: {file_path}")
+            
+            except Exception as e:
+                self.logger.warning(f"Error scanning directory {watch_path}: {e}")
+        
+        if files_queued > 0:
+            self.logger.info(f"Initial scan complete: {files_queued} file(s) queued for conversion")
+        else:
+            self.logger.info("Initial scan complete: No files found for conversion")
     
     def run(self) -> None:
         """
