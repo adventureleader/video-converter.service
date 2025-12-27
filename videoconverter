@@ -233,7 +233,19 @@ class Config:
     
     def get_watch_paths(self) -> List[str]:
         """Get list of directories to monitor."""
-        return self.config_data.get("directories", {}).get("watch_paths", [])
+        watch_paths_config = self.config_data.get("directories", {}).get("watch_paths", [])
+        
+        # Handle both list of strings and list of dicts with 'path' key
+        watch_paths = []
+        for item in watch_paths_config:
+            if isinstance(item, dict):
+                # Check if enabled (default to True if not specified)
+                if item.get("enabled", True):
+                    watch_paths.append(item.get("path"))
+            elif isinstance(item, str):
+                watch_paths.append(item)
+        
+        return [p for p in watch_paths if p]  # Filter out None values
     
     def get_log_dir(self) -> str:
         """Get log directory path, with environment variable override."""
@@ -769,6 +781,12 @@ class FFmpegHandler:
             List of command arguments for subprocess.
         """
         cmd = ["ffmpeg", "-i", input_path]
+        
+        # Map only the first video stream and all audio streams (exclude attached pictures)
+        cmd.extend([
+            "-map", "0:v:0",  # First video stream only
+            "-map", "0:a"     # All audio streams
+        ])
         
         # Add encoder-specific parameters
         if encoder == "hevc_nvenc":

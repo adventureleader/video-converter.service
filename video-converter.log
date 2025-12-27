@@ -1,0 +1,167 @@
+2025-12-27 02:44:22,047 - INFO - Starting Video Converter Service.
+2025-12-27 02:44:22,047 - INFO - Performing initial scan of directories...
+2025-12-27 02:44:22,048 - WARNING - Directory not found, skipping: /path/to/your/movies
+2025-12-27 02:44:22,048 - WARNING - Directory not found, skipping: /path/to/your/tv-shows
+2025-12-27 02:44:22,049 - INFO - Initial scan complete.
+2025-12-27 02:44:22,049 - WARNING - Configured directory does not exist: /path/to/your/movies
+2025-12-27 02:44:22,049 - WARNING - Configured directory does not exist: /path/to/your/tv-shows
+2025-12-27 02:44:22,049 - INFO - File system monitoring started.
+2025-12-27 02:45:17,264 - INFO - Starting Video Converter Service.
+2025-12-27 02:45:17,264 - INFO - Performing initial scan of directories...
+2025-12-27 02:45:17,264 - INFO - Scanning /media/movies...
+2025-12-27 02:45:17,273 - INFO - Processing 'The Land Before Time XIII The Wisdom of Friends (2007) WEBDL-1080p.mkv'.
+2025-12-27 02:45:18,000 - INFO - No compatible GPU detected. Falling back to CPU encoding with 'medium' preset.
+2025-12-27 02:45:18,000 - INFO - Executing ffmpeg command: ffmpeg -i /media/movies/The Land Before Time XIII The Wisdom of Friends (2007)/The Land Before Time XIII The Wisdom of Friends (2007) WEBDL-1080p.mkv -map 0:v -map 0:a -c:v libx265 -crf 22 -preset medium -vf scale=w=1920:h=1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2 -c:a eac3 -b:a 1536k -y /media/movies/The Land Before Time XIII The Wisdom of Friends (2007)/The Land Before Time XIII The Wisdom of Friends (2007) WEBDL-1080p.mp4
+2025-12-27 02:45:20,787 - ERROR - Failed to convert /media/movies/The Land Before Time XIII The Wisdom of Friends (2007)/The Land Before Time XIII The Wisdom of Friends (2007) WEBDL-1080p.mkv. FFmpeg errors:
+ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers
+  built with gcc 13 (Ubuntu 13.2.0-23ubuntu3)
+  configuration: --prefix=/usr --extra-version=3ubuntu5 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --disable-omx --enable-gnutls --enable-libaom --enable-libass --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libharfbuzz --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-openal --enable-opencl --enable-opengl --disable-sndio --enable-libvpl --disable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-ladspa --enable-libbluray --enable-libjack --enable-libpulse --enable-librabbitmq --enable-librist --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libx264 --enable-libzmq --enable-libzvbi --enable-lv2 --enable-sdl2 --enable-libplacebo --enable-librav1e --enable-pocketsphinx --enable-librsvg --enable-libjxl --enable-shared
+  libavutil      58. 29.100 / 58. 29.100
+  libavcodec     60. 31.102 / 60. 31.102
+  libavformat    60. 16.100 / 60. 16.100
+  libavdevice    60.  3.100 / 60.  3.100
+  libavfilter     9. 12.100 /  9. 12.100
+  libswscale      7.  5.100 /  7.  5.100
+  libswresample   4. 12.100 /  4. 12.100
+  libpostproc    57.  3.100 / 57.  3.100
+Input #0, matroska,webm, from '/media/movies/The Land Before Time XIII The Wisdom of Friends (2007)/The Land Before Time XIII The Wisdom of Friends (2007) WEBDL-1080p.mkv':
+  Metadata:
+    encoder         : libebml v1.3.5 + libmatroska v1.4.8
+    creation_time   : 2018-08-11T15:17:44.000000Z
+  Duration: 01:12:31.76, start: 0.000000, bitrate: 7091 kb/s
+  Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], Closed Captions, 25 fps, 25 tbr, 1k tbn (default)
+    Metadata:
+      title           : [1080p.AMZN.WEB-DL.DDP5.1.x264-ABM]
+      BPS             : 6320932
+      BPS-eng         : 6320932
+      DURATION        : 01:12:31.760000000
+      DURATION-eng    : 01:12:31.760000000
+      NUMBER_OF_FRAMES: 108794
+      NUMBER_OF_FRAMES-eng: 108794
+      NUMBER_OF_BYTES : 3438397514
+      NUMBER_OF_BYTES-eng: 3438397514
+      _STATISTICS_WRITING_APP: mkvmerge v20.0.0 ('I Am The Sun') 64-bit
+      _STATISTICS_WRITING_APP-eng: mkvmerge v20.0.0 ('I Am The Sun') 64-bit
+      _STATISTICS_WRITING_DATE_UTC: 2018-08-11 15:17:44
+      _STATISTICS_WRITING_DATE_UTC-eng: 2018-08-11 15:17:44
+      _STATISTICS_TAGS: BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES
+      _STATISTICS_TAGS-eng: BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES
+  Stream #0:1(gre): Audio: ac3, 44100 Hz, 5.1(side), fltp, 384 kb/s (default)
+    Metadata:
+      title           : Synced by Smad
+      BPS             : 383999
+      BPS-eng         : 383999
+      DURATION        : 01:12:27.159000000
+      DURATION-eng    : 01:12:27.159000000
+      NUMBER_OF_FRAMES: 124811
+      NUMBER_OF_FRAMES-eng: 124811
+      NUMBER_OF_BYTES : 208663614
+      NUMBER_OF_BYTES-eng: 208663614
+      _STATISTICS_WRITING_APP: mkvmerge v20.0.0 ('I Am The Sun') 64-bit
+      _STATISTICS_WRITING_APP-eng: mkvmerge v20.0.0 ('I Am The Sun') 64-bit
+      _STATISTICS_WRITING_DATE_UTC: 2018-08-11 15:17:44
+      _STATISTICS_WRITING_DATE_UTC-eng: 2018-08-11 15:17:44
+      _STATISTICS_TAGS: BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES
+      _STATISTICS_TAGS-eng: BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES
+  Stream #0:2(eng): Audio: ac3, 48000 Hz, 5.1(side), fltp, 384 kb/s
+    Metadata:
+      title           : English
+      BPS             : 384000
+      BPS-eng         : 384000
+      DURATION        : 01:12:31.712000000
+      DURATION-eng    : 01:12:31.712000000
+      NUMBER_OF_FRAMES: 135991
+      NUMBER_OF_FRAMES-eng: 135991
+      NUMBER_OF_BYTES : 208882176
+      NUMBER_OF_BYTES-eng: 208882176
+      _STATISTICS_WRITING_APP: mkvmerge v20.0.0 ('I Am The Sun') 64-bit
+      _STATISTICS_WRITING_APP-eng: mkvmerge v20.0.0 ('I Am The Sun') 64-bit
+      _STATISTICS_WRITING_DATE_UTC: 2018-08-11 15:17:44
+      _STATISTICS_WRITING_DATE_UTC-eng: 2018-08-11 15:17:44
+      _STATISTICS_TAGS: BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES
+      _STATISTICS_TAGS-eng: BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES
+  Stream #0:3(eng): Subtitle: subrip
+    Metadata:
+      title           : English
+      BPS             : 42
+      BPS-eng         : 42
+      DURATION        : 01:08:15.996000000
+      DURATION-eng    : 01:08:15.996000000
+      NUMBER_OF_FRAMES: 830
+      NUMBER_OF_FRAMES-eng: 830
+      NUMBER_OF_BYTES : 21597
+      NUMBER_OF_BYTES-eng: 21597
+      _STATISTICS_WRITING_APP: mkvmerge v20.0.0 ('I Am The Sun') 64-bit
+      _STATISTICS_WRITING_APP-eng: mkvmerge v20.0.0 ('I Am The Sun') 64-bit
+      _STATISTICS_WRITING_DATE_UTC: 2018-08-11 15:17:44
+      _STATISTICS_WRITING_DATE_UTC-eng: 2018-08-11 15:17:44
+      _STATISTICS_TAGS: BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES
+      _STATISTICS_TAGS-eng: BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES
+  Stream #0:4: Video: mjpeg (Baseline), yuvj444p(pc, bt470bg/unknown/unknown), 420x630 [SAR 1:1 DAR 2:3], 90k tbr, 90k tbn (attached pic)
+    Metadata:
+      filename        : cover.jpg
+      mimetype        : image/jpeg
+Stream mapping:
+  Stream #0:0 -> #0:0 (h264 (native) -> hevc (libx265))
+  Stream #0:4 -> #0:1 (mjpeg (native) -> hevc (libx265))
+  Stream #0:1 -> #0:2 (ac3 (native) -> eac3 (native))
+  Stream #0:2 -> #0:3 (ac3 (native) -> eac3 (native))
+Press [q] to stop, [?] for help
+[swscaler @ 0x5edac8a88180] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5edac8a956c0] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5edac8c33080] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5edac8a956c0] deprecated pixel format used, make sure you did set range correctly
+x265 [info]: HEVC encoder version 3.5+1-f0c1022b6
+x265 [info]: build info [Linux][GCC 13.2.0][64 bit] 8bit+10bit+12bit
+x265 [info]: using cpu capabilities: MMX2 SSE2Fast LZCNT SSSE3 SSE4.2 AVX XOP FMA4 FMA3 BMI1
+x265 [warning]: halving the quality when psy-rd is enabled for 444 input. Setting cbQpOffset = 6 and crQpOffset = 6
+x265 [info]: Main 4:4:4 profile, Level-6.1 (Main tier)
+x265 [info]: Thread pool created using 8 threads
+x265 [info]: Slices                              : 1
+x265 [info]: frame threads / pool features       : 3 / wpp(17 rows)
+x265 [info]: Coding QT: max CU size, min CU size : 64 / 8
+x265 [info]: Residual QT: max TU size, max depth : 32 / 1 inter / 1 intra
+x265 [info]: ME / range / subpel / merge         : hex / 57 / 2 / 3
+x265 [info]: Keyframe min / max / scenecut / bias  : 25 / 250 / 40 / 5.00 
+x265 [info]: Cb/Cr QP Offset                     : 6 / 6
+x265 [info]: Lookahead / bframes / badapt        : 20 / 4 / 2
+x265 [info]: b-pyramid / weightp / weightb       : 1 / 1 / 0
+x265 [info]: References / ref-limit  cu / depth  : 3 / off / on
+x265 [info]: AQ: mode / str / qg-size / cu-tree  : 2 / 1.0 / 32 / 1
+x265 [info]: Rate Control / qCompress            : CRF-22.0 / 0.60
+x265 [info]: tools: rd=3 psy-rd=2.00 early-skip rskip mode=1 signhide tmvp
+x265 [info]: tools: b-intra strong-intra-smoothing lslices=6 deblock sao
+x265 [info]: HEVC encoder version 3.5+1-f0c1022b6
+x265 [info]: build info [Linux][GCC 13.2.0][64 bit] 8bit+10bit+12bit
+x265 [info]: using cpu capabilities: MMX2 SSE2Fast LZCNT SSSE3 SSE4.2 AVX XOP FMA4 FMA3 BMI1
+x265 [info]: Main profile, Level-4 (Main tier)
+x265 [info]: Thread pool created using 8 threads
+x265 [info]: Slices                              : 1
+x265 [info]: frame threads / pool features       : 3 / wpp(17 rows)
+x265 [info]: Coding QT: max CU size, min CU size : 64 / 8
+x265 [info]: Residual QT: max TU size, max depth : 32 / 1 inter / 1 intra
+x265 [info]: ME / range / subpel / merge         : hex / 57 / 2 / 3
+x265 [info]: Keyframe min / max / scenecut / bias  : 25 / 250 / 40 / 5.00 
+x265 [info]: Lookahead / bframes / badapt        : 20 / 4 / 2
+x265 [info]: b-pyramid / weightp / weightb       : 1 / 1 / 0
+x265 [info]: References / ref-limit  cu / depth  : 3 / off / on
+x265 [info]: AQ: mode / str / qg-size / cu-tree  : 2 / 1.0 / 32 / 1
+x265 [info]: Rate Control / qCompress            : CRF-22.0 / 0.60
+x265 [info]: tools: rd=3 psy-rd=2.00 early-skip rskip mode=1 signhide tmvp
+x265 [info]: tools: b-intra strong-intra-smoothing lslices=6 deblock sao
+[mp4 @ 0x5edac8185300] Could not find tag for codec hevc in stream #1, codec not currently supported in container
+[out#0/mp4 @ 0x5edac8182bc0] Could not write header (incorrect codec parameters ?): Invalid argument
+Error while filtering: Invalid argument
+[out#0/mp4 @ 0x5edac8182bc0] Nothing was written into output file, because at least one of its streams received no packets.
+frame=    0 fps=0.0 q=0.0 Lq=31.1 size=       0kB time=00:00:00.81 bitrate=   0.0kbits/s speed=1.23x    
+
+encoded 0 frames
+x265 [info]: frame I:      1, Avg QP:31.11  kb/s: 35110080.00
+x265 [info]: consecutive B-frames: 100.0% 0.0% 0.0% 0.0% 0.0% 
+
+encoded 1 frames in 0.58s (1.72 fps), 35110082.70 kb/s, Avg QP:31.11
+Conversion failed!
+
+2025-12-27 02:45:20,792 - INFO - Processing 'The Land Before Time XIV Journey of the Brave (2016) WEBRip-1080p.mkv'.
+2025-12-27 02:45:20,845 - INFO - No compatible GPU detected. Falling back to CPU encoding with 'medium' preset.
+2025-12-27 02:45:20,845 - INFO - Executing ffmpeg command: ffmpeg -i /media/movies/The Land Before Time XIV Journey of the Brave (2016)/The Land Before Time XIV Journey of the Brave (2016) WEBRip-1080p.mkv -map 0:v -map 0:a -c:v libx265 -crf 22 -preset medium -vf scale=w=1920:h=1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2 -c:a eac3 -b:a 1536k -y /media/movies/The Land Before Time XIV Journey of the Brave (2016)/The Land Before Time XIV Journey of the Brave (2016) WEBRip-1080p.mp4
