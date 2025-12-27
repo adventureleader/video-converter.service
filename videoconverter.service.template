@@ -1,0 +1,250 @@
+# ===================================================================
+# Video Converter Service - Systemd Unit File Template
+# ===================================================================
+# This is a template for the systemd service unit file for the
+# video converter service. The installation script will process this
+# template and replace placeholders with actual values before
+# installing to /etc/systemd/system/videoconverter.service
+#
+# Placeholders:
+#   %USER%  - Will be replaced with the service user
+#   %GROUP% - Will be replaced with the service group
+#
+# Manual Installation:
+#   1. Copy this file to /etc/systemd/system/videoconverter.service
+#   2. Replace %USER% and %GROUP% with appropriate values
+#   3. Run: sudo systemctl daemon-reload
+#   4. Run: sudo systemctl enable videoconverter
+#   5. Run: sudo systemctl start videoconverter
+# ===================================================================
+
+[Unit]
+# ===================================================================
+# UNIT SECTION - Service metadata and dependencies
+# ===================================================================
+
+# Human-readable description of the service
+Description=Video Converter Service - Automated video encoding daemon
+
+# Link to documentation
+# Users can access documentation with: systemctl help videoconverter
+Documentation=man:videoconverter(1) file:///etc/videoconverter/config.yml
+
+# Services that must be started before this service
+# network.target: Ensures network is available (if needed for remote storage)
+# syslog.target: Ensures logging is available
+After=network.target syslog.target
+
+# Services that should be started if this service is started
+# Optional dependencies that enhance functionality but aren't required
+Wants=network-online.target
+
+
+[Service]
+# ===================================================================
+# SERVICE SECTION - Service execution and behavior
+# ===================================================================
+
+# Service type
+# simple: Service runs in foreground (standard for daemons)
+# forking: Service forks into background (legacy)
+# oneshot: Service runs once and exits
+Type=simple
+
+# User account to run the service under
+# IMPORTANT: This user must have permissions to:
+#   - Read from watch_directories
+#   - Write to /var/log/videoconverter
+#   - Write to /var/lib/videoconverter
+#   - Write to /var/run/videoconverter
+# Placeholder will be replaced by installation script
+User=%USER%
+
+# Group to run the service under
+# IMPORTANT: This group must have the same permissions as the user
+# Placeholder will be replaced by installation script
+Group=%GROUP%
+
+# Load environment variables from file
+# This file can contain additional configuration like:
+#   VIDEOCONVERTER_CONFIG=/etc/videoconverter/config.yml
+#   VIDEOCONVERTER_LOG_LEVEL=INFO
+# Create this file if you need to override configuration
+EnvironmentFile=/etc/videoconverter/videoconverter.env
+
+# Command to start the service
+# The service will run this command and keep it running
+# If the process exits, it will be restarted based on Restart= policy
+ExecStart=/usr/local/bin/videoconverter
+
+# Command to reload the service configuration
+# Sends SIGHUP signal to the main process
+# The service should handle this signal to reload configuration
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart policy
+# on-failure: Restart only if the service exits with non-zero status
+# always: Always restart the service if it exits
+# no: Do not restart the service
+Restart=on-failure
+
+# Delay before restarting after failure
+# Supports exponential backoff: 5s, 10s, 30s, 60s
+# Format: 5s, 10s, 30s, 60s (space-separated)
+RestartSec=5s 10s 30s 60s
+
+# Restart limit window in seconds
+# Limits the number of restarts within this time window
+# If StartLimitBurst restarts occur within StartLimitInterval,
+# the service will not be restarted again
+StartLimitInterval=300
+
+# Maximum number of restarts within StartLimitInterval
+# If exceeded, the service enters failed state
+StartLimitBurst=5
+
+# Standard output destination
+# journal: Send to systemd journal (recommended)
+# syslog: Send to syslog
+# kmsg: Send to kernel log buffer
+StandardOutput=journal
+
+# Standard error destination
+# journal: Send to systemd journal (recommended)
+# syslog: Send to syslog
+StandardError=journal
+
+# Syslog identifier
+# Used to tag log messages in the journal
+# Allows filtering logs: journalctl -u videoconverter
+SyslogIdentifier=videoconverter
+
+# ===================================================================
+# SECURITY HARDENING
+# ===================================================================
+# The following settings implement security best practices to
+# restrict the service's access and capabilities.
+
+# Use private /tmp directory
+# Prevents the service from accessing other processes' temporary files
+PrivateTmp=yes
+
+# Prevent privilege escalation
+# The service cannot gain additional privileges via setuid/setgid
+NoNewPrivileges=yes
+
+# Protect system directories
+# strict: Mount system directories as read-only
+# Prevents accidental or malicious modification of system files
+ProtectSystem=strict
+
+# Protect home directories
+# Prevents the service from accessing user home directories
+ProtectHome=yes
+
+# Writable paths (exceptions to ProtectSystem=strict)
+# These directories must be writable for the service to function
+# - /var/log/videoconverter: Service logs
+# - /var/lib/videoconverter: Service state and database
+# - /var/run/videoconverter: Runtime files and lockfile
+ReadWritePaths=/var/log/videoconverter /var/lib/videoconverter /var/run/videoconverter
+
+# ===================================================================
+# PROCESS MANAGEMENT
+# ===================================================================
+
+# Timeout for graceful shutdown in seconds
+# systemd will wait this long for the service to stop gracefully
+# After timeout, the service will be forcefully killed
+TimeoutStopSec=30
+
+# Kill mode for stopping the service
+# mixed: Send SIGTERM to main process, SIGKILL to child processes
+# process: Send signal only to main process
+# control-group: Send signal to entire process group
+KillMode=mixed
+
+# Signal to send when stopping the service
+# SIGTERM: Graceful termination (recommended)
+# SIGKILL: Immediate termination (not recommended)
+KillSignal=SIGTERM
+
+# ===================================================================
+# OPTIONAL OVERRIDES
+# ===================================================================
+# Users can override these settings by creating a drop-in directory:
+#
+# Example: Override the restart delay
+#   sudo mkdir -p /etc/systemd/system/videoconverter.service.d
+#   sudo tee /etc/systemd/system/videoconverter.service.d/override.conf <<EOF
+#   [Service]
+#   RestartSec=10s
+#   EOF
+#   sudo systemctl daemon-reload
+#
+# Example: Increase timeout for slow systems
+#   sudo tee /etc/systemd/system/videoconverter.service.d/timeout.conf <<EOF
+#   [Service]
+#   TimeoutStopSec=60
+#   EOF
+#   sudo systemctl daemon-reload
+#
+# Example: Add environment variables
+#   sudo tee /etc/systemd/system/videoconverter.service.d/env.conf <<EOF
+#   [Service]
+#   Environment="VIDEOCONVERTER_LOG_LEVEL=DEBUG"
+#   EOF
+#   sudo systemctl daemon-reload
+
+
+[Install]
+# ===================================================================
+# INSTALL SECTION - Service enablement and target
+# ===================================================================
+
+# Target to enable this service for
+# multi-user.target: Standard multi-user system (recommended)
+# graphical.target: Graphical desktop environment
+# The service will be started automatically when the target is reached
+WantedBy=multi-user.target
+
+# ===================================================================
+# COMMON SYSTEMCTL COMMANDS
+# ===================================================================
+# After installation, use these commands to manage the service:
+#
+# Start the service:
+#   sudo systemctl start videoconverter
+#
+# Stop the service:
+#   sudo systemctl stop videoconverter
+#
+# Restart the service:
+#   sudo systemctl restart videoconverter
+#
+# Reload configuration (sends SIGHUP):
+#   sudo systemctl reload videoconverter
+#
+# Enable service to start on boot:
+#   sudo systemctl enable videoconverter
+#
+# Disable service from starting on boot:
+#   sudo systemctl disable videoconverter
+#
+# Check service status:
+#   sudo systemctl status videoconverter
+#
+# View service logs:
+#   sudo journalctl -u videoconverter
+#
+# View recent logs (last 50 lines):
+#   sudo journalctl -u videoconverter -n 50
+#
+# Follow logs in real-time:
+#   sudo journalctl -u videoconverter -f
+#
+# View logs since last boot:
+#   sudo journalctl -u videoconverter -b
+#
+# View logs with full details:
+#   sudo journalctl -u videoconverter -o verbose

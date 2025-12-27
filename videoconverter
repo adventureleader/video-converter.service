@@ -270,7 +270,7 @@ class Config:
     
     def get_retry_delay(self) -> int:
         """Get delay between retry attempts in seconds."""
-        return self.config_data.get("error_handling", {}).get("retry_delay", 60)
+        return self.config_data.get("error_handling", {}).get("retry_delay_seconds", 60)
 
 
 # ============================================================================

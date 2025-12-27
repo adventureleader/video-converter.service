@@ -1,0 +1,233 @@
+# ===================================================================
+# Video Converter Service Configuration
+# ===================================================================
+# This is the default configuration file for the video converter service.
+# It will be installed to /etc/videoconverter/config.yml by the
+# installation script. Modify this file to customize the service behavior.
+#
+# YAML 1.2 Syntax - Ensure proper indentation (2 spaces)
+# ===================================================================
+
+
+# ===================================================================
+# SERVICE CONFIGURATION
+# ===================================================================
+# Core service settings that control the overall behavior of the
+# video converter daemon.
+service:
+  # Logging level for the service
+  # Valid values: DEBUG, INFO, WARNING, ERROR
+  # DEBUG: Verbose output for troubleshooting
+  # INFO: Standard operational messages (recommended)
+  # WARNING: Only warning and error messages
+  # ERROR: Only error messages
+  log_level: INFO
+
+  # Number of concurrent conversion threads
+  # Controls how many videos can be converted simultaneously
+  # Recommended: 1-4 depending on CPU cores and available memory
+  # WARNING: Higher values may cause system resource exhaustion
+  max_workers: 2
+
+  # FFmpeg conversion timeout in seconds
+  # Maximum time allowed for a single conversion operation
+  # Default: 3600 seconds (1 hour)
+  # Set to 0 for no timeout (not recommended)
+  conversion_timeout: 3600
+
+
+# ===================================================================
+# DIRECTORY MONITORING
+# ===================================================================
+# Configure which directories to monitor for video files that need
+# conversion. The service will automatically detect new files and
+# queue them for processing.
+directories:
+  # List of directories to monitor for video files
+  # Each directory entry can be enabled/disabled independently
+  # REQUIRED: Must contain at least one watch path
+  watch_paths:
+    # Default watch path - modify as needed for your environment
+    - path: /var/lib/videoconverter/queue
+      recursive: true
+      enabled: true
+    
+    # Additional example paths (uncomment and modify as needed):
+    # - path: /home/user/Videos/ToConvert
+    #   recursive: true
+    #   enabled: true
+    #
+    # - path: /mnt/media/incoming
+    #   recursive: false
+    #   enabled: true
+
+  # File patterns to match for conversion
+  # Supports glob patterns (e.g., *.mkv, *.mp4, *.avi)
+  # Multiple patterns can be specified as a list
+  file_patterns:
+    - "*.mkv"
+    # - "*.mp4"
+    # - "*.avi"
+    # - "*.mov"
+
+  # Patterns to exclude from conversion
+  # Files matching these patterns will be skipped
+  # Useful for excluding temporary files, samples, or already-converted files
+  exclude_patterns: []
+    # - "*sample*"
+    # - "*temp*"
+    # - ".*"  # Hidden files
+
+  # Output directory for converted files
+  # Can be absolute path or relative to source directory
+  # Default: ../converted (relative to source)
+  output_dir: ../converted
+
+
+# ===================================================================
+# LOGGING CONFIGURATION
+# ===================================================================
+# Configure how the service logs its operations. Logs are essential
+# for monitoring, debugging, and auditing the conversion process.
+logging:
+  # Path to the log directory
+  # The service must have write permissions to this directory
+  # Default: /var/log/videoconverter
+  # REQUIRED: Must be specified
+  log_dir: /var/log/videoconverter
+
+  # Log format for output
+  # Valid values: json, text
+  # json: Structured logging for easy parsing and analysis
+  # text: Human-readable format for manual inspection
+  log_format: json
+
+  # Maximum age of log files in days
+  # Older logs will be automatically deleted
+  # Set to 0 to disable automatic cleanup
+  max_log_age_days: 14
+
+  # Enable daily log rotation
+  # When enabled, logs are rotated daily to prevent excessive file growth
+  # Rotated logs are compressed and archived
+  log_rotation: true
+
+
+# ===================================================================
+# FILE HANDLING
+# ===================================================================
+# Control how the service handles source files before, during, and
+# after the conversion process.
+file_handling:
+  # Delete the original file after successful conversion
+  # WARNING: Enable only if you have backups or are certain about conversions
+  # Set to false to keep original files
+  delete_original: true
+
+  # Preserve original file permissions on converted file
+  # If enabled, the converted file will have the same permissions as the source
+  preserve_permissions: true
+
+  # Preserve original file timestamps (atime, mtime)
+  # If enabled, the converted file will have the same modification time
+  # Useful for maintaining chronological file organization
+  preserve_timestamps: false
+
+  # Create a backup of the original file before conversion
+  # Backups are stored with .backup extension in the same directory
+  # WARNING: Requires double the disk space during conversion
+  backup_original: false
+
+
+# ===================================================================
+# CONVERSION SETTINGS
+# ===================================================================
+# Configure the video encoding parameters. These settings directly
+# affect the output quality, file size, and conversion speed.
+conversion:
+  # Video codec for output
+  # Valid values: hevc (H.265), h264 (H.264), vp9, av1
+  # hevc: Modern codec with better compression (recommended)
+  # h264: Widely compatible, larger files
+  # vp9: Good compression, slower encoding
+  # av1: Best compression, very slow encoding
+  codec: hevc
+
+  # Encoding preset (speed vs quality tradeoff)
+  # Valid values: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow
+  # ultrafast: Fastest encoding, lowest quality
+  # medium: Balanced speed and quality (recommended)
+  # veryslow: Slowest encoding, highest quality
+  # WARNING: Slower presets significantly increase conversion time
+  preset: medium
+
+  # Quality level (Constant Rate Factor)
+  # Range: 0-51 (lower = better quality, larger file)
+  # 0: Lossless (very large files)
+  # 18-28: Visually lossless to high quality (recommended: 23-28)
+  # 28: Default, good quality with reasonable file size
+  # 51: Lowest quality, smallest file
+  crf: 28
+
+  # Audio codec for output
+  # Valid values: aac, libmp3lame, libopus, libvorbis
+  # aac: Good compatibility, reasonable quality (recommended)
+  # libmp3lame: MP3 format, widely compatible
+  # libopus: Modern codec, excellent quality
+  # libvorbis: Open source, good quality
+  audio_codec: aac
+
+  # Audio bitrate
+  # Format: number followed by k (kilobits) or m (megabits)
+  # Examples: 128k, 192k, 256k, 320k
+  # Lower values: smaller file, lower quality
+  # Higher values: larger file, better quality
+  # Recommended: 128k-192k for most use cases
+  audio_bitrate: 128k
+
+
+# ===================================================================
+# ERROR HANDLING
+# ===================================================================
+# Configure how the service handles conversion failures and errors.
+# These settings determine retry behavior and error recovery.
+error_handling:
+  # Maximum number of retry attempts for failed conversions
+  # The service will automatically retry failed conversions this many times
+  # Set to 0 to disable retries
+  max_retries: 3
+
+  # Delay between retry attempts in seconds
+  # Exponential backoff is applied: delay * (attempt_number)
+  # First retry: 60 seconds, Second: 120 seconds, Third: 180 seconds
+  retry_delay_seconds: 60
+
+  # Skip file on error after max retries exceeded
+  # If true: Failed files are marked as skipped and processing continues
+  # If false: Failed files remain in queue and block further processing
+  # WARNING: Enabling this may cause files to be silently skipped
+  skip_on_error: false
+
+
+# ===================================================================
+# ADVANCED SETTINGS
+# ===================================================================
+# Advanced configuration options for fine-tuning service behavior.
+# Modify these settings only if you understand their implications.
+advanced:
+  # Path to the lockfile
+  # Used to prevent multiple instances of the service from running
+  # The service must have write permissions to this directory
+  lockfile_path: /var/run/videoconverter/videoconverter.lock
+
+  # File stability check duration in seconds
+  # The service waits this long to verify a file is not being written to
+  # before starting conversion. Prevents processing incomplete uploads.
+  # Recommended: 5-10 seconds
+  file_stability_check_seconds: 5
+
+  # Enable dry-run mode
+  # When enabled, the service simulates conversions without actually
+  # encoding videos. Useful for testing configuration and file detection.
+  # WARNING: No actual conversions will occur in dry-run mode
+  enable_dry_run: false
